@@ -119,21 +119,20 @@ def backup_server(browser: webdriver.Remote):
         # Navigate to the backup page
         browser.get(BACKUP_URL)
 
-        # Refresh the page to ensure all elements are loaded
-        browser.refresh()
-
         # Click the backup button
         backup_button = wait.until(EC.element_to_be_clickable((By.ID, "make_backup")))
         backup_button.click()
 
-        # Confirm the backup
-        confirm_button = wait.until(
-            EC.element_to_be_clickable(
-                (By.XPATH, "//button[contains(text(), 'CONFIRM')]")
-            )
+        # Wait for div containing the confirmation message class dialog__actions
+        confirm_div = wait.until(
+            EC.presence_of_element_located((By.CLASS_NAME, "dialog__actions"))
+        )
+
+        # Click the confirm button /div/button[1]
+        confirm_button = confirm_div.wait.until(
+            EC.element_to_be_clickable((By.XPATH, "//div/button[1]"))
         )
         confirm_button.click()
-
         logger.info("Backup initiated successfully")
 
     except Exception as e:
