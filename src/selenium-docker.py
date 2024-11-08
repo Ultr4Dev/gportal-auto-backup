@@ -38,6 +38,7 @@ QUERY_URL = os.environ.get(
     "QUERY_URL", f"https://api.g-portal.com/gameserver/query/{SERVER_ID}"
 )
 SELENIUM_URL = os.environ.get("SELENIUM_URL", "localhost")
+SELENIUM_PORT = os.environ.get("SELENIUM_PORT", "4444")
 # Check required environment variables
 required_env_vars = ["USERNAME", "PASSWORD", "WEBHOOK_URL", "ROLE_ID", "SERVER_ID"]
 missing_vars = [var for var in required_env_vars if globals()[var] is None]
@@ -226,8 +227,9 @@ def main():
 
     browser = webdriver.Remote(
         desired_capabilities=webdriver.DesiredCapabilities.FIREFOX,
-        command_executor=f"http://{SELENIUM_URL}:4444/wd/hub",
+        command_executor=f"http://{SELENIUM_URL}:{SELENIUM_PORT}/wd/hub",
     )
+    browser.get(BASE_URL)
     input("Press Enter to continue...")
     while True:
         server_status = get_server_status()

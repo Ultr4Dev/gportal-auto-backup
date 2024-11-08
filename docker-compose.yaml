@@ -23,27 +23,19 @@ services:
       - BACKUP_URL=${BACKUP_URL}
       - BASE_URL=${BASE_URL}
       - SELENIUM_URL=selenium-hub
+      - SELENIUM_PORT=4444
       - BROWSER=firefox  # Use 'chrome' or 'edge' if needed
     volumes:
       - /dev/shm:/dev/shm  # To enhance performance for headless browsers
     depends_on:
       - selenium-hub
 
-  firefox:
-    image: selenium/node-firefox:latest
+  selenium:
+    image: selenium/standalone-firefox
     shm_size: 2gb
-    depends_on:
-      - selenium-hub
-    environment:
-      - SE_EVENT_BUS_HOST=selenium-hub
-      - SE_EVENT_BUS_PUBLISH_PORT=4442
-      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
-
-  selenium-hub:
-    image: selenium/hub
     ports:
       - "4444:4444"
-    shm_size: '2g'
+      - "7900:7900"
 
 volumes:
   browser_data:
