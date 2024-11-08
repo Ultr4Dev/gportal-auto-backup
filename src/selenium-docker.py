@@ -62,7 +62,7 @@ def test_selenium_server_available():
     session.mount("http://", adapter)
     session.mount("https://", adapter)
 
-    session.get("http://localhost:4444/wd/hub")
+    session.get(f"http://{SELENIUM_URL}:{SELENIUM_PORT}/wd/hub")
 
 
 def backup_server(browser: webdriver.Firefox | webdriver.Chrome | webdriver.Edge):
