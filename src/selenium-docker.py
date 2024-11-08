@@ -4,6 +4,7 @@ import time
 import logging
 from urllib import request
 from selenium import webdriver
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -240,10 +241,11 @@ def main():
             value = "*" * len(value)
         logger.info(f"{key}: {value}")
     browser_choice = os.environ.get("BROWSER", "firefox").lower()
-
+    options = FirefoxOptions()
+    options.set_capability("pageLoadStrategy", "normal")
     browser = webdriver.Remote(
         command_executor=f"http://{SELENIUM_URL}:{SELENIUM_PORT}/wd/hub",
-        options=[],
+        options=options,
     )
     if not browser:
         logger.error("Unable to connect to Selenium server, aborting")
