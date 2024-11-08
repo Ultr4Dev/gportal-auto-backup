@@ -225,7 +225,7 @@ def main():
 
     browser = webdriver.Remote(
         desired_capabilities=webdriver.DesiredCapabilities.FIREFOX,
-        command_executor="http://selenium-hub:4444/wd/hub",
+        command_executor=f"http://{SELENIUM_URL}:4444/wd/hub",
     )
     input("Press Enter to continue...")
     while True:
