@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import time
 import logging
 from urllib import request
@@ -73,48 +74,8 @@ def backup_server(browser: webdriver.Remote):
     logger.info("Starting backup process")
 
     # Choose the browser to use (default to Firefox)
-
+    wait = WebDriverWait(browser, 10)
     try:
-        # Open the base URL
-        browser.get(BASE_URL)
-        browser.add_cookie(
-            {
-                "name": "cookiefirst-consent",
-                "value": json.dumps(
-                    {
-                        "necessary": True,
-                        "performance": False,
-                        "functional": True,
-                        "advertising": False,
-                        "timestamp": time.time(),
-                        "type": "category",
-                        "version": "10f415a9-8c26-4538-8cbf-5b14f58a1ae2",
-                    }
-                ),
-            }
-        )
-        browser.refresh()
-        wait = WebDriverWait(browser, 10)
-
-        # Click the login button
-        login_button = wait.until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, "button[aria-label='Login']"))
-        )
-        login_button.click()
-
-        # Enter username
-        username_input = wait.until(
-            EC.visibility_of_element_located((By.ID, "username"))
-        )
-        username_input.send_keys(USERNAME)
-
-        # Enter password
-        password_input = browser.find_element(By.ID, "password")
-        password_input.send_keys(PASSWORD)
-
-        # Click the login button
-        login_submit = browser.find_element(By.NAME, "login")
-        login_submit.click()
 
         # Navigate to the backup page
         browser.get(BACKUP_URL)
@@ -129,12 +90,15 @@ def backup_server(browser: webdriver.Remote):
         )
 
         # Click the confirm button /div/button[1]
-        confirm_button = confirm_div.wait.until(
-            EC.element_to_be_clickable((By.XPATH, "//div/button[1]"))
-        )
+        confirm_button = confirm_div.find_elements(By.TAG_NAME, "button")[1]
         confirm_button.click()
         logger.info("Backup initiated successfully")
-
+        wait.until(
+            EC.element_to_be_clickable(
+                (By.CLASS_NAME, "notification notification--success")
+            )
+        )
+        logger.info("Backup completed successfully")
     except Exception as e:
         logger.error(f"An error occurred during backup: {e}")
     finally:
@@ -213,12 +177,17 @@ def notify_discord(player_count: int):
     return DO_BACKUP, timer, timestamp
 
 
-def notify_backup_complete(next_backup: float):
+def notify_backup_complete(next_backup: float, success: bool = True):
     """
     Send a notification to Discord about the backup completion.
     """
     next_backup_time = int(float(time.time()) + float(next_backup))
-    message = f"<@&{ROLE_ID}>\nBackup completed successfully. **Next backup:** <t:{int(next_backup_time)}:R>.\n(Note: The backup timer may vary based on player count)"
+    if not success:
+        message = f"<@&{ROLE_ID}>\nBackup failed. **Next backup:** <t:{int(next_backup_time)}:R>."
+    elif success:
+        message = f"<@&{ROLE_ID}>\nBackup completed successfully. **Next backup:** <t:{int(next_backup_time)}:R>.\n(Note: The backup timer may vary based on player count)"
+    else:
+        message = f"<@&{ROLE_ID}>\n Unknown error occurred. **Next backup:** <t:{int(next_backup_time)}:R>."
     webhook = DiscordWebhook(url=WEBHOOK_URL, content=message)
     try:
         response = webhook.execute()
@@ -234,6 +203,48 @@ def notify_backup_complete(next_backup: float):
         )
 
 
+def login(browser: webdriver.Remote):
+    # Open the base URL
+    browser.get(BASE_URL)
+    browser.add_cookie(
+        {
+            "name": "cookiefirst-consent",
+            "value": json.dumps(
+                {
+                    "necessary": True,
+                    "performance": False,
+                    "functional": True,
+                    "advertising": False,
+                    "timestamp": time.time(),
+                    "type": "category",
+                    "version": "10f415a9-8c26-4538-8cbf-5b14f58a1ae2",
+                }
+            ),
+        }
+    )
+    browser.refresh()
+    wait = WebDriverWait(browser, 10)
+
+    # Click the login button
+    login_button = wait.until(
+        EC.element_to_be_clickable((By.CSS_SELECTOR, "button[aria-label='Login']"))
+    )
+    login_button.click()
+
+    # Enter username
+    username_input = wait.until(EC.visibility_of_element_located((By.ID, "username")))
+    username_input.send_keys(USERNAME)
+
+    # Enter password
+    password_input = browser.find_element(By.ID, "password")
+    password_input.send_keys(PASSWORD)
+
+    # Click the login button
+    login_submit = browser.find_element(By.NAME, "login")
+    login_submit.click()
+    return browser
+
+
 def main():
     # test_selenium_server_available()
     logger = logging.getLogger(__name__)
@@ -247,21 +258,28 @@ def main():
         logger.info(f"{key}: {value}")
     browser_choice = os.environ.get("BROWSER", "firefox").lower()
     options = FirefoxOptions()
-    options.set_capability("pageLoadStrategy", "normal")
-    browser = webdriver.Remote(
-        command_executor=f"http://{SELENIUM_URL}:{SELENIUM_PORT}/wd/hub",
-        options=options,
-    )
-    if not browser:
-        logger.error("Unable to connect to Selenium server, aborting")
-        return
+    options.set_capability("pageLoadStrategy", "eager")
+
     # browser.get(BASE_URL)
     while True:
         server_status = get_server_status()
         if server_status is None:
             logger.error("Unable to retrieve server status, aborting")
             return
+        browser = None
+        while browser is None:
+            try:
+                browser = webdriver.Remote(
+                    command_executor=f"http://{SELENIUM_URL}:{SELENIUM_PORT}/wd/hub",
+                    options=options,
+                )
+            except Exception as e:
+                logger.error(f"Error connecting to Selenium server: {e}")
+                time.sleep(2)
 
+        if not browser:
+            logger.error("Unable to connect to Selenium server, aborting")
+            return
         player_count = server_status.get("currentPlayers", 0)
         logger.info(f"Players online: {player_count}")
         backup, timer, timestamp = notify_discord(player_count=player_count)
@@ -270,12 +288,25 @@ def main():
         server_status = get_server_status()
         player_count = server_status.get("currentPlayers", 0)
         notify_discord_half_time(timestamp, player_count)
-        time.sleep(timer / 2)
+        browser = login(browser)
+        time_left = timestamp - time.time()
+        if time_left > 0:
+
+            time.sleep(time_left)
+        else:
+            logger.info("Backup initiated")
         if backup:
-            backup_server(browser)
-        notify_backup_complete(BACKUP_TIMER)
+            try:
+                backup_server(browser)
+                notify_backup_complete(BACKUP_TIMER, True)
+            except Exception as e:
+                logger.error(f"An error occurred during backup: {e}")
+                notify_backup_complete(BACKUP_TIMER, False)
+
         logger.info(f"Waiting for {BACKUP_TIMER} seconds before checking again")
         time.sleep(BACKUP_TIMER)
+        browser.close()
+        browser.quit()
 
 
 if __name__ == "__main__":
