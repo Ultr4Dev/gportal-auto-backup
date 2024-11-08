@@ -40,7 +40,7 @@ services:
       - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
 
   selenium-hub:
-    image: selenium/standalone-firefox:latest
+    image: selenium/hub
     ports:
       - "4444:4444"
     shm_size: '2g'
