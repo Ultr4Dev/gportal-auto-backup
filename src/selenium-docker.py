@@ -222,17 +222,9 @@ def main():
         logger.info(f"{key}: {value}")
     browser_choice = os.environ.get("BROWSER", "firefox").lower()
 
-    if browser_choice == "chrome":
-        options = webdriver.ChromeOptions()
-    elif browser_choice == "edge":
-        options = webdriver.EdgeOptions()
-    else:
-        # Default to Firefox
-        options = webdriver.FirefoxOptions()
-
-    # Connect to the Selenium Hub
     browser = webdriver.Remote(
-        command_executor=f"http://{SELENIUM_URL}:4444/wd/hub", options=options
+        desired_capabilities=webdriver.DesiredCapabilities.FIREFOX,
+        command_executor="http://selenium-hub:4444/wd/hub",
     )
     while True:
         server_status = get_server_status()
