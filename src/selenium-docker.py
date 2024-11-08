@@ -245,7 +245,6 @@ def main():
         command_executor=f"http://{SELENIUM_URL}:{SELENIUM_PORT}/wd/hub",
     )
     browser.get(BASE_URL)
-    input("Press Enter to continue...")
     while True:
         server_status = get_server_status()
         if server_status is None:
