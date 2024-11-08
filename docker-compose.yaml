@@ -22,13 +22,13 @@ services:
       - QUERY_URL=${QUERY_URL}
       - BACKUP_URL=${BACKUP_URL}
       - BASE_URL=${BASE_URL}
-      - SELENIUM_URL=selenium-hub
+      - SELENIUM_URL=selenium
       - SELENIUM_PORT=4444
       - BROWSER=firefox  # Use 'chrome' or 'edge' if needed
     volumes:
       - /dev/shm:/dev/shm  # To enhance performance for headless browsers
     depends_on:
-      - selenium-hub
+      - selenium
 
   selenium:
     image: selenium/standalone-firefox
