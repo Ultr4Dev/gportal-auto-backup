@@ -250,7 +250,7 @@ def main():
     if not browser:
         logger.error("Unable to connect to Selenium server, aborting")
         return
-    browser.get(BASE_URL)
+    # browser.get(BASE_URL)
     while True:
         server_status = get_server_status()
         if server_status is None:
