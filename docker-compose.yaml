@@ -1,11 +1,10 @@
-version: '3.8'
-
 services:
   app:
     build:
-      context: .
+      context: https://github.com/Ultr4Dev/gportal-auto-backup.git
       dockerfile: Dockerfile
-    container_name: selenium_backup_app
+      no_cache: false
+    container_name: gportal_auto_backup
     restart: always
     environment:
       - USERNAME=${USERNAME}
@@ -32,7 +31,7 @@ services:
 
   selenium:
     image: selenium/standalone-firefox
-    shm_size: 2gb
+    shm_size: 4gb
     ports:
       - "4444:4444"
       - "7900:7900"
