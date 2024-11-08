@@ -26,17 +26,21 @@ BACKUP_TIMER = int(os.environ.get("BACKUP_TIMER")) * 3600
 CONFIG_TIMER_MULTIPLE_PLAYER = int(os.environ.get("CONFIG_TIMER_MULTIPLE_PLAYER")) * 60
 CONFIG_TIMER_SINGLE_PLAYER = int(os.environ.get("CONFIG_TIMER_SINGLE_PLAYER")) * 60
 CONFIG_TIMER_NO_PLAYER = int(os.environ.get("CONFIG_TIMER_NO_PLAYER")) * 60
+GAME = os.environ.get("GAME", "scum")
+BASE_URL = os.environ.get("BASE_URL", "https://www.g-portal.com/en")
+BACKUP_URL = os.environ.get(
+    "BACKUP_URL",
+    f"https://www.g-portal.com/eur/server/{GAME}/{SERVER_ID}/system/backup",
+)
+QUERY_URL = os.environ.get(
+    "QUERY_URL", f"https://api.g-portal.com/gameserver/query/{SERVER_ID}"
+)
 # Check required environment variables
 required_env_vars = ["USERNAME", "PASSWORD", "WEBHOOK_URL", "ROLE_ID", "SERVER_ID"]
 missing_vars = [var for var in required_env_vars if globals()[var] is None]
 if missing_vars:
     logger.error(f"Missing environment variables: {', '.join(missing_vars)}")
     exit(1)
-
-# Constants
-BASE_URL = "https://www.g-portal.com/en"
-BACKUP_URL = f"https://www.g-portal.com/eur/server/scum/{SERVER_ID}/system/backup"
-QUERY_URL = f"https://api.g-portal.com/gameserver/query/{SERVER_ID}"
 
 
 # You can set DO_BACKUP via environment variable or default to False
