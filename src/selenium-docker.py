@@ -242,7 +242,6 @@ def main():
     browser_choice = os.environ.get("BROWSER", "firefox").lower()
 
     browser = webdriver.Remote(
-        desired_capabilities=webdriver.DesiredCapabilities.FIREFOX,
         command_executor=f"http://{SELENIUM_URL}:{SELENIUM_PORT}/wd/hub",
     )
     browser.get(BASE_URL)
