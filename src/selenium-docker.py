@@ -50,29 +50,15 @@ if missing_vars:
 DO_BACKUP = os.environ.get("DO_BACKUP", "False").lower() in ("true", "1", "yes")
 
 
-def backup_server():
+def backup_server(browser: webdriver.Firefox | webdriver.Chrome | webdriver.Edge):
     """
     Automate the backup process using Selenium with Selenium Hub.
     """
     logger.info("Starting backup process")
 
     # Choose the browser to use (default to Firefox)
-    browser_choice = os.environ.get("BROWSER", "firefox").lower()
-
-    if browser_choice == "chrome":
-        options = webdriver.ChromeOptions()
-    elif browser_choice == "edge":
-        options = webdriver.EdgeOptions()
-    else:
-        # Default to Firefox
-        options = webdriver.FirefoxOptions()
 
     try:
-        # Connect to the Selenium Hub
-        browser = webdriver.Remote(
-            command_executor=f"http://{SELENIUM_URL}:4444/wd/hub", options=options
-        )
-
         # Open the base URL
         browser.get(BASE_URL)
         wait = WebDriverWait(browser, 10)
@@ -234,6 +220,20 @@ def main():
         if key in ["PASSWORD", "WEBHOOK_URL"]:
             value = "*" * len(value)
         logger.info(f"{key}: {value}")
+    browser_choice = os.environ.get("BROWSER", "firefox").lower()
+
+    if browser_choice == "chrome":
+        options = webdriver.ChromeOptions()
+    elif browser_choice == "edge":
+        options = webdriver.EdgeOptions()
+    else:
+        # Default to Firefox
+        options = webdriver.FirefoxOptions()
+
+    # Connect to the Selenium Hub
+    browser = webdriver.Remote(
+        command_executor=f"http://{SELENIUM_URL}:4444/wd/hub", options=options
+    )
     while True:
         server_status = get_server_status()
         if server_status is None:
@@ -250,7 +250,7 @@ def main():
         notify_discord_half_time(timestamp, player_count)
         time.sleep(timer / 2)
         if backup:
-            backup_server()
+            backup_server(browser)
         notify_backup_complete(BACKUP_TIMER)
         logger.info(f"Waiting for {BACKUP_TIMER} seconds before checking again")
         time.sleep(BACKUP_TIMER)
