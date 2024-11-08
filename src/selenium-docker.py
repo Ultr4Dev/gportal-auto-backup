@@ -77,6 +77,23 @@ def backup_server(browser: webdriver.Remote):
     try:
         # Open the base URL
         browser.get(BASE_URL)
+        browser.add_cookie(
+            {
+                "name": "cookiefirst-consent",
+                "value": json.dumps(
+                    {
+                        "necessary": True,
+                        "performance": False,
+                        "functional": True,
+                        "advertising": False,
+                        "timestamp": time.time(),
+                        "type": "category",
+                        "version": "10f415a9-8c26-4538-8cbf-5b14f58a1ae2",
+                    }
+                ),
+            }
+        )
+        browser.refresh()
         wait = WebDriverWait(browser, 10)
 
         # Click the login button
@@ -101,17 +118,6 @@ def backup_server(browser: webdriver.Remote):
 
         # Navigate to the backup page
         browser.get(BACKUP_URL)
-
-        # Accept cookies if the button is present
-        try:
-            accept_cookies_button = wait.until(
-                EC.element_to_be_clickable(
-                    (By.CSS_SELECTOR, "button[aria-label='Accept all cookies']")
-                )
-            )
-            accept_cookies_button.click()
-        except:
-            logger.info("No cookies acceptance button found")
 
         # Refresh the page to ensure all elements are loaded
         browser.refresh()
