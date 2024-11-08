@@ -273,6 +273,7 @@ def main():
                     command_executor=f"http://{SELENIUM_URL}:{SELENIUM_PORT}/wd/hub",
                     options=options,
                 )
+                sessionID = browser.session_id
             except Exception as e:
                 logger.error(f"Error connecting to Selenium server: {e}")
                 time.sleep(2)
@@ -291,7 +292,6 @@ def main():
         browser = login(browser)
         time_left = timestamp - time.time()
         if time_left > 0:
-
             time.sleep(time_left)
         else:
             logger.info("Backup initiated")
@@ -304,9 +304,9 @@ def main():
                 notify_backup_complete(BACKUP_TIMER, False)
 
         logger.info(f"Waiting for {BACKUP_TIMER} seconds before checking again")
-        time.sleep(BACKUP_TIMER)
         browser.close()
         browser.quit()
+        time.sleep(BACKUP_TIMER)
 
 
 if __name__ == "__main__":
