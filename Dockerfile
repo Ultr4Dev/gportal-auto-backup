@@ -1,12 +1,7 @@
 FROM python:3.10-slim
 
 # Install necessary packages and Firefox
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    firefox-esr curl wget tar \
-    && rm -rf /var/lib/apt/lists/*
-
-# Set environment variables for Firefox
-ENV FIREFOX_BIN="/usr/bin/firefox-esr"
+RUN apt-get update
 
 # Install Python dependencies
 COPY requirements.txt .
