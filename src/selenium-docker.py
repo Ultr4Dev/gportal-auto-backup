@@ -37,6 +37,7 @@ BACKUP_URL = os.environ.get(
 QUERY_URL = os.environ.get(
     "QUERY_URL", f"https://api.g-portal.com/gameserver/query/{SERVER_ID}"
 )
+SELENIUM_URL = os.environ.get("SELENIUM_URL", "localhost")
 # Check required environment variables
 required_env_vars = ["USERNAME", "PASSWORD", "WEBHOOK_URL", "ROLE_ID", "SERVER_ID"]
 missing_vars = [var for var in required_env_vars if globals()[var] is None]
@@ -69,7 +70,7 @@ def backup_server():
     try:
         # Connect to the Selenium Hub
         browser = webdriver.Remote(
-            command_executor="http://selenium-hub:4444/wd/hub", options=options
+            command_executor=f"http://{SELENIUM_URL}:4444/wd/hub", options=options
         )
 
         # Open the base URL
@@ -149,7 +150,7 @@ def get_server_status():
 
 def notify_discord_half_time(timestamp: float, player_count: int):
     message = (
-        f"Server will be backed up <t:{timestamp}:R>, please log off.\n"
+        f"Server will be backed up <t:{int(timestamp)}:R>, please log off.\n"
         f"There are currently {player_count} player(s) online."
     )
     webhook = DiscordWebhook(url=WEBHOOK_URL, content=message)
@@ -187,7 +188,7 @@ def notify_discord(player_count: int):
         timestamp = float(time.time() + timer)
         message = (
             f"<@&{ROLE_ID}>\n"
-            f"Server will be backed up <t:{timestamp}:R>, please log off.\n"
+            f"Server will be backed up <t:{int(timestamp)}:R>, please log off.\n"
             f"There are currently {player_count} player(s) online."
         )
         webhook = DiscordWebhook(url=WEBHOOK_URL, content=message)
@@ -210,7 +211,7 @@ def notify_backup_complete(next_backup: float):
     Send a notification to Discord about the backup completion.
     """
     next_backup_time = int(float(time.time()) + float(next_backup))
-    message = f"<@&{ROLE_ID}>\nBackup completed successfully. **Next backup:** <t:{next_backup_time}:R>.\n(Note: The backup timer may vary based on player count)"
+    message = f"<@&{ROLE_ID}>\nBackup completed successfully. **Next backup:** <t:{int(next_backup_time)}:R>.\n(Note: The backup timer may vary based on player count)"
     webhook = DiscordWebhook(url=WEBHOOK_URL, content=message)
     try:
         response = webhook.execute()
