@@ -132,7 +132,3 @@ The application logs key events and errors for debugging and tracking purposes. 
 ## License
 
 This project is open-source and licensed under the MIT License. Feel free to contribute, suggest improvements, or report issues.
-
----
-
-Feel free to customize or expand on this README as needed for your specific repository.
