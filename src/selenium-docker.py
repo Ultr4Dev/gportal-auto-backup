@@ -65,7 +65,7 @@ def test_selenium_server_available():
     session.get(f"http://{SELENIUM_URL}:{SELENIUM_PORT}/wd/hub")
 
 
-def backup_server(browser: webdriver.Firefox | webdriver.Chrome | webdriver.Edge):
+def backup_server(browser: webdriver.Remote):
     """
     Automate the backup process using Selenium with Selenium Hub.
     """
@@ -229,7 +229,7 @@ def notify_backup_complete(next_backup: float):
 
 
 def main():
-    test_selenium_server_available()
+    # test_selenium_server_available()
     logger = logging.getLogger(__name__)
     logger.debug("Starting Selenium Docker script")
     # Print all environment variables
@@ -243,7 +243,11 @@ def main():
 
     browser = webdriver.Remote(
         command_executor=f"http://{SELENIUM_URL}:{SELENIUM_PORT}/wd/hub",
+        options=[],
     )
+    if not browser:
+        logger.error("Unable to connect to Selenium server, aborting")
+        return
     browser.get(BASE_URL)
     while True:
         server_status = get_server_status()
