@@ -228,6 +228,12 @@ def notify_backup_complete(next_backup: float):
 
 
 def main():
+    # Print all environment variables
+    logger.info("Environment variables:")
+    for key, value in os.environ.items():
+        if key in ["PASSWORD", "WEBHOOK_URL"]:
+            value = "*" * len(value)
+        logger.info(f"{key}: {value}")
     while True:
         server_status = get_server_status()
         if server_status is None:
