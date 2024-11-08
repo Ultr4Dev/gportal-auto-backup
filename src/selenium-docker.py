@@ -22,10 +22,12 @@ PASSWORD = os.environ.get("PASSWORD")
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
 ROLE_ID = os.environ.get("ROLE_ID")
 SERVER_ID = os.environ.get("SERVER_ID")
-BACKUP_TIMER = int(os.environ.get("BACKUP_TIMER")) * 3600
-CONFIG_TIMER_MULTIPLE_PLAYER = int(os.environ.get("CONFIG_TIMER_MULTIPLE_PLAYER")) * 60
-CONFIG_TIMER_SINGLE_PLAYER = int(os.environ.get("CONFIG_TIMER_SINGLE_PLAYER")) * 60
-CONFIG_TIMER_NO_PLAYER = int(os.environ.get("CONFIG_TIMER_NO_PLAYER")) * 60
+BACKUP_TIMER = float(os.environ.get("BACKUP_TIMER")) * 3600
+CONFIG_TIMER_MULTIPLE_PLAYER = (
+    float(os.environ.get("CONFIG_TIMER_MULTIPLE_PLAYER")) * 60
+)
+CONFIG_TIMER_SINGLE_PLAYER = float(os.environ.get("CONFIG_TIMER_SINGLE_PLAYER")) * 60
+CONFIG_TIMER_NO_PLAYER = float(os.environ.get("CONFIG_TIMER_NO_PLAYER")) * 60
 GAME = os.environ.get("GAME", "scum")
 BASE_URL = os.environ.get("BASE_URL", "https://www.g-portal.com/en")
 BACKUP_URL = os.environ.get(
@@ -58,23 +60,16 @@ def backup_server():
 
     if browser_choice == "chrome":
         options = webdriver.ChromeOptions()
-        options.add_argument("--headless")
-        capabilities = options.to_capabilities()
     elif browser_choice == "edge":
         options = webdriver.EdgeOptions()
-        options.add_argument("--headless")
-        capabilities = options.to_capabilities()
     else:
         # Default to Firefox
         options = webdriver.FirefoxOptions()
-        options.add_argument("--headless")
-        capabilities = options.to_capabilities()
 
     try:
         # Connect to the Selenium Hub
         browser = webdriver.Remote(
-            command_executor="http://selenium-hub:4444/wd/hub",
-            desired_capabilities=capabilities,
+            command_executor="http://selenium-hub:4444/wd/hub", options=options
         )
 
         # Open the base URL
@@ -152,7 +147,7 @@ def get_server_status():
         return None
 
 
-def notify_discord_half_time(timestamp: int, player_count: int):
+def notify_discord_half_time(timestamp: float, player_count: int):
     message = (
         f"Server will be backed up <t:{timestamp}:R>, please log off.\n"
         f"There are currently {player_count} player(s) online."
@@ -189,7 +184,7 @@ def notify_discord(player_count: int):
             timer = CONFIG_TIMER_MULTIPLE_PLAYER
 
     if player_count > 0 or DO_BACKUP:
-        timestamp = int(time.time() + timer)
+        timestamp = float(time.time() + timer)
         message = (
             f"<@&{ROLE_ID}>\n"
             f"Server will be backed up <t:{timestamp}:R>, please log off.\n"
@@ -210,11 +205,11 @@ def notify_discord(player_count: int):
     return DO_BACKUP, timer, timestamp
 
 
-def notify_backup_complete(next_backup: int):
+def notify_backup_complete(next_backup: float):
     """
     Send a notification to Discord about the backup completion.
     """
-    next_backup_time = int(int(time.time()) + int(next_backup))
+    next_backup_time = int(float(time.time()) + float(next_backup))
     message = f"<@&{ROLE_ID}>\nBackup completed successfully. **Next backup:** <t:{next_backup_time}:R>.\n(Note: The backup timer may vary based on player count)"
     webhook = DiscordWebhook(url=WEBHOOK_URL, content=message)
     try:
