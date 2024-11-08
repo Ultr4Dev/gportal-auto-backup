@@ -214,7 +214,8 @@ def notify_backup_complete(next_backup: float):
 
 
 def main():
-    logging.debug("Starting Selenium Docker script")
+    logger = logging.getLogger(__name__)
+    logger.debug("Starting Selenium Docker script")
     # Print all environment variables
     logger.info("Environment variables:")
     for key, value in os.environ.items():
