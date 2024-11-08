@@ -86,25 +86,31 @@ services:
       - WEBHOOK_URL=${WEBHOOK_URL}
       - ROLE_ID=${ROLE_ID}
       - SERVER_ID=${SERVER_ID}
+      - GAME=${GAME}
       - DO_BACKUP=${DO_BACKUP}
       - BACKUP_TIMER=${BACKUP_TIMER}
       - CONFIG_TIMER_MULTIPLE_PLAYER=${CONFIG_TIMER_MULTIPLE_PLAYER}
       - CONFIG_TIMER_SINGLE_PLAYER=${CONFIG_TIMER_SINGLE_PLAYER}
       - CONFIG_TIMER_NO_PLAYER=${CONFIG_TIMER_NO_PLAYER}
-      - BROWSER=firefox
+      - QUERY_URL=${QUERY_URL}
+      - BACKUP_URL=${BACKUP_URL}
+      - BASE_URL=${BASE_URL}
+      - BROWSER=firefox  # Use 'chrome' or 'edge' if needed
     volumes:
-      - /dev/shm:/dev/shm
+      - /dev/shm:/dev/shm  # To enhance performance for headless browsers
     network_mode: "bridge"
     depends_on:
       - selenium-hub
-    command: ["python3", "selenium-docker.py"]
-
   selenium-hub:
     image: selenium/standalone-firefox:latest
     container_name: selenium_hub
     ports:
       - "4444:4444"
     shm_size: '2g'
+
+volumes:
+  browser_data:
+
 ```
 
 ## How It Works
