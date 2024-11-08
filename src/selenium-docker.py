@@ -51,6 +51,20 @@ if missing_vars:
 DO_BACKUP = os.environ.get("DO_BACKUP", "False").lower() in ("true", "1", "yes")
 
 
+def test_selenium_server_available():
+    import requests
+    from requests.adapters import HTTPAdapter
+    from requests.packages.urllib3.util.retry import Retry
+
+    session = requests.Session()
+    retry = Retry(connect=5, backoff_factor=0.5)
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+
+    session.get("http://localhost:4444/wd/hub")
+
+
 def backup_server(browser: webdriver.Firefox | webdriver.Chrome | webdriver.Edge):
     """
     Automate the backup process using Selenium with Selenium Hub.
