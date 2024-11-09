@@ -23,6 +23,10 @@ USERNAME = os.environ.get("USERNAME")
 PASSWORD = os.environ.get("PASSWORD")
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
 ROLE_ID = os.environ.get("ROLE_ID")
+# You can set DO_BACKUP via environment variable or default to False
+DO_BACKUP = os.environ.get("DO_BACKUP", "False").lower() in ("true", "1", "yes")
+if not DO_BACKUP:
+    ROLE_ID = "000000000000000000"
 SERVER_ID = os.environ.get("SERVER_ID")
 BACKUP_TIMER = int(os.environ.get("BACKUP_TIMER")) * 3600
 CONFIG_TIMER_MULTIPLE_PLAYER = (
@@ -47,10 +51,6 @@ missing_vars = [var for var in required_env_vars if globals()[var] is None]
 if missing_vars:
     logger.error(f"Missing environment variables: {', '.join(missing_vars)}")
     exit(1)
-
-
-# You can set DO_BACKUP via environment variable or default to False
-DO_BACKUP = os.environ.get("DO_BACKUP", "False").lower() in ("true", "1", "yes")
 
 
 def backup_server(browser: webdriver.Remote):
