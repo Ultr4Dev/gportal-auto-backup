@@ -24,7 +24,7 @@ PASSWORD = os.environ.get("PASSWORD")
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
 ROLE_ID = os.environ.get("ROLE_ID")
 SERVER_ID = os.environ.get("SERVER_ID")
-BACKUP_TIMER = float(os.environ.get("BACKUP_TIMER")) * 3600
+BACKUP_TIMER = int(os.environ.get("BACKUP_TIMER")) * 3600
 CONFIG_TIMER_MULTIPLE_PLAYER = (
     float(os.environ.get("CONFIG_TIMER_MULTIPLE_PLAYER")) * 60
 )
@@ -51,20 +51,6 @@ if missing_vars:
 
 # You can set DO_BACKUP via environment variable or default to False
 DO_BACKUP = os.environ.get("DO_BACKUP", "False").lower() in ("true", "1", "yes")
-
-
-def test_selenium_server_available():
-    import requests
-    from requests.adapters import HTTPAdapter
-    from requests.packages.urllib3.util.retry import Retry
-
-    session = requests.Session()
-    retry = Retry(connect=5, backoff_factor=0.5)
-    adapter = HTTPAdapter(max_retries=retry)
-    session.mount("http://", adapter)
-    session.mount("https://", adapter)
-
-    session.get(f"http://{SELENIUM_URL}:{SELENIUM_PORT}/wd/hub")
 
 
 def backup_server(browser: webdriver.Remote):
@@ -256,7 +242,6 @@ def main():
         if key in ["PASSWORD", "WEBHOOK_URL"]:
             value = "*" * len(value)
         logger.info(f"{key}: {value}")
-    browser_choice = os.environ.get("BROWSER", "firefox").lower()
     options = FirefoxOptions()
     options.set_capability("pageLoadStrategy", "eager")
 
