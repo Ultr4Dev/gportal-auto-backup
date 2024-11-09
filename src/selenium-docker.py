@@ -252,6 +252,16 @@ def main():
             logger.error("Unable to retrieve server status, aborting")
             return
         browser = None
+
+        player_count = server_status.get("currentPlayers", 0)
+        logger.info(f"Players online: {player_count}")
+        backup, timer, timestamp = notify_discord(player_count=player_count)
+        logger.info(f"Waiting for {timer} seconds before initiating backup")
+        time.sleep(timer - 120)
+
+        server_status = get_server_status()
+        player_count = server_status.get("currentPlayers", 0)
+        notify_discord_half_time(timestamp, player_count)
         while browser is None:
             try:
                 browser = webdriver.Remote(
@@ -266,14 +276,6 @@ def main():
         if not browser:
             logger.error("Unable to connect to Selenium server, aborting")
             return
-        player_count = server_status.get("currentPlayers", 0)
-        logger.info(f"Players online: {player_count}")
-        backup, timer, timestamp = notify_discord(player_count=player_count)
-        logger.info(f"Waiting for {timer} seconds before initiating backup")
-        time.sleep(timer * 0.75)
-        server_status = get_server_status()
-        player_count = server_status.get("currentPlayers", 0)
-        notify_discord_half_time(timestamp, player_count)
         browser = login(browser)
         time_left = timestamp - time.time()
         if time_left > 0:
