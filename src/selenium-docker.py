@@ -326,7 +326,7 @@ def main() -> None:
     login_times = []
     backup_times = []
     total_prepare_time = 120  # Initial estimate of time required to prepare
-
+    offset = 0
     logger.debug("Starting backup script")
     logger.info("Environment variables:")
     for key in required_env_vars:
@@ -369,7 +369,7 @@ def main() -> None:
             if avg_login_time == 0:
                 avg_login_time = 120
 
-            total_prepare_time = avg_login_time + avg_backup_time + selenium_start_time
+            total_prepare_time = avg_login_time + selenium_start_time + offset
 
             # Ensure we don't sleep negative time
             sleep_time = max(timer - total_prepare_time, 0)
@@ -413,6 +413,10 @@ def main() -> None:
             backup_times.append(backup_duration)
             logger.info(f"Backup took {backup_duration:.2f} seconds")
 
+            # is it past the timestamp?
+            if time.time() > timestamp:
+                # Adjust the offset to account for the time taken to perform the backup
+                offset = time.time() - timestamp
             # Notify backup completion
             notify_backup_complete(BACKUP_TIMER, success=True)
 
