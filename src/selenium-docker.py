@@ -365,9 +365,9 @@ def main() -> None:
                 sum(backup_times) / len(backup_times) if backup_times else 0
             )
             if avg_backup_time == 0:
-                avg_backup_time = 120
+                avg_backup_time = 30
             if avg_login_time == 0:
-                avg_login_time = 120
+                avg_login_time = 60
 
             total_prepare_time = avg_login_time + selenium_start_time + offset
 
