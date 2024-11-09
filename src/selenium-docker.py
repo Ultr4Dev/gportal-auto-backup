@@ -373,6 +373,9 @@ def main() -> None:
 
             # Ensure we don't sleep negative time
             sleep_time = max(timer - total_prepare_time, 0)
+            sleep_time = (
+                sleep_time * 0.8
+            )  # Reduce sleep time by 20% to account for offsets
             logger.info(
                 f"Sleeping for {sleep_time} seconds before preparing for backup"
             )
@@ -419,7 +422,8 @@ def main() -> None:
                 offset = time.time() - timestamp
             # Notify backup completion
             notify_backup_complete(BACKUP_TIMER, success=True)
-
+            with open("latest_backup.txt", "w+") as f:
+                f.write(f"{time.time()}")
             # Close browser
             browser.quit()
 
