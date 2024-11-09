@@ -60,7 +60,7 @@ def backup_server(browser: webdriver.Remote):
     logger.info("Starting backup process")
 
     # Choose the browser to use (default to Firefox)
-    wait = WebDriverWait(browser, 10)
+    wait = WebDriverWait(browser, 10, poll_frequency=0.1)
     try:
 
         # Navigate to the backup page
