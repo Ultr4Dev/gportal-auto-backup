@@ -149,7 +149,7 @@ def notify_backup_complete(next_backup: float, success: bool = True) -> None:
     """
     next_backup_time = int(time.time() + next_backup)
     message = (
-        f"Backup completed successfully. **Next backup:** <t:{next_backup_time}:R>."
+        f"Backup completed successfully. **Next backup routine will start in approximately ** <t:{next_backup_time}:R> depending on if there are players online."
         if success
         else f"Backup failed. **Next backup:** <t:{next_backup_time}:R>."
     )
