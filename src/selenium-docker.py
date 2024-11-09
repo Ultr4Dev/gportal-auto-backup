@@ -336,7 +336,7 @@ def main() -> None:
         )
 
     options = FirefoxOptions()
-    options.set_capability("pageLoadStrategy", "normal")
+    options.set_capability("pageLoadStrategy", "eager")
 
     while True:
         try:
