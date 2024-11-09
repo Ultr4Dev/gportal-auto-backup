@@ -149,9 +149,9 @@ def notify_backup_complete(next_backup: float, success: bool = True):
     """
     next_backup_time = int(time.time() + next_backup)
     message = (
-        f"<@&{ROLE_ID}>\nBackup completed successfully. **Next backup:** <t:{next_backup_time}:R>."
+        f"Backup completed successfully. **Next backup:** <t:{next_backup_time}:R>."
         if success
-        else f"<@&{ROLE_ID}>\nBackup failed. **Next backup:** <t:{next_backup_time}:R>."
+        else f"Backup failed. **Next backup:** <t:{next_backup_time}:R>."
     )
     send_discord_message(message)
 
