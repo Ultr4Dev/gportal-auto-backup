@@ -261,7 +261,7 @@ def main():
                 sessionID = browser.session_id
             except Exception as e:
                 logger.error(f"Error connecting to Selenium server: {e}")
-                time.sleep(2)
+                time.sleep(5)
 
         if not browser:
             logger.error("Unable to connect to Selenium server, aborting")
@@ -270,7 +270,7 @@ def main():
         logger.info(f"Players online: {player_count}")
         backup, timer, timestamp = notify_discord(player_count=player_count)
         logger.info(f"Waiting for {timer} seconds before initiating backup")
-        time.sleep(timer / 2)
+        time.sleep(timer * 0.75)
         server_status = get_server_status()
         player_count = server_status.get("currentPlayers", 0)
         notify_discord_half_time(timestamp, player_count)
