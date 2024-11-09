@@ -70,7 +70,7 @@ def send_discord_message(message: str):
         logger.error(f"An error occurred while sending message to Discord: {e}")
 
 
-def get_server_status():
+def get_server_status() -> dict[str, int | str]:
     """
     Retrieves the current server status from the API.
 
@@ -104,7 +104,7 @@ def notify_discord_half_time(timestamp: float, player_count: int):
     send_discord_message(message)
 
 
-def notify_discord(player_count: int):
+def notify_discord(player_count: int) -> tuple[bool, float, float]:
     """
     Notifies Discord about the upcoming backup and calculates the timer.
 
@@ -139,7 +139,7 @@ def notify_discord(player_count: int):
     return DO_BACKUP, timer, timestamp
 
 
-def notify_backup_complete(next_backup: float, success: bool = True):
+def notify_backup_complete(next_backup: float, success: bool = True) -> None:
     """
     Notifies Discord about the backup completion status.
 
@@ -156,7 +156,7 @@ def notify_backup_complete(next_backup: float, success: bool = True):
     send_discord_message(message)
 
 
-def login(browser: webdriver.Remote):
+def login(browser: webdriver.Remote) -> webdriver.Remote:
     """
     Logs into the G-Portal website using the provided browser.
 
@@ -225,7 +225,7 @@ def login(browser: webdriver.Remote):
 
 def backup_server(
     browser: webdriver.Remote, fake: bool = False, click_time: float = 0.5
-):
+) -> None:
     """
     Initiates a server backup via the web interface.
 
@@ -312,7 +312,7 @@ def test_selenium_server_available(max_attempts: int = 5, delay: int = 5) -> flo
                 time.sleep(delay)
 
 
-def send_misc_message(message: str):
+def send_misc_message(message: str) -> None:
     """
     Sends a miscellaneous message to Discord.
 
@@ -322,7 +322,7 @@ def send_misc_message(message: str):
     send_discord_message(message)
 
 
-def main():
+def main() -> None:
     login_times = []
     backup_times = []
     total_prepare_time = 120  # Initial estimate of time required to prepare
