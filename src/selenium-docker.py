@@ -1,9 +1,13 @@
 import os
 import json
+import re
 import time
 import logging
 from urllib import request, error
 from selenium import webdriver
+import selenium
+import selenium.common
+import selenium.webdriver
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -23,7 +27,12 @@ PASSWORD = os.getenv("PASSWORD")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 ROLE_ID = os.getenv("ROLE_ID")
 SERVER_ID = os.getenv("SERVER_ID")
-DO_BACKUP = os.getenv("DO_BACKUP", "False").lower() in ("true", "1", "yes")
+DO_BACKUP_str = os.getenv("DO_BACKUP", "true")
+if DO_BACKUP_str.lower() == "true":
+    DO_BACKUP = True
+elif DO_BACKUP_str.lower() == "false":
+    DO_BACKUP = False
+
 if not DO_BACKUP:
     ROLE_ID = "000000000000000000"
 BACKUP_TIMER = float(os.getenv("BACKUP_TIMER", "2")) * 3600
@@ -70,7 +79,7 @@ def send_discord_message(message: str):
         logger.error(f"An error occurred while sending message to Discord: {e}")
 
 
-def get_server_status() -> dict[str, int | str]:
+def get_server_status() -> dict:
     """
     Retrieves the current server status from the API.
 
@@ -114,28 +123,35 @@ def notify_discord(player_count: int) -> tuple[bool, float, float]:
     Returns:
         tuple: (do_backup (bool), timer (float), timestamp (float))
     """
-    timer = 0
-    if player_count == 0 and DO_BACKUP:
+    # Determine the timer based on player count
+    if player_count == 0:
         timer = CONFIG_TIMER_NO_PLAYER
         logger.info("No players online, starting backup")
-    elif player_count > 0:
-        if player_count == 1:
-            timer = CONFIG_TIMER_SINGLE_PLAYER
-        else:
-            timer = CONFIG_TIMER_MULTIPLE_PLAYER
-        logger.info("Players online, notifying Discord about pending backup")
-
-    if player_count > 0 or DO_BACKUP:
+        timestamp = time.time() + timer
+        message = (
+            f"Server will be backed up <t:{int(timestamp)}:R>, please log off.\n"
+            f"**This is a simulated backup and no action will be taken.**"
+        )
+    elif player_count == 1:
+        timer = CONFIG_TIMER_SINGLE_PLAYER
+        logger.info("Single player online, notifying Discord about pending backup")
         timestamp = time.time() + timer
         message = (
             f"<@&{ROLE_ID}>\n"
             f"Server will be backed up <t:{int(timestamp)}:R>, please log off.\n"
-            f"There are currently {player_count} player(s) online."
+            f"There is currently 1 player online."
         )
-        send_discord_message(message)
     else:
-        timestamp = time.time()
+        timer = CONFIG_TIMER_MULTIPLE_PLAYER
+        logger.info("Multiple players online, notifying Discord about pending backup")
+        timestamp = time.time() + timer
+        message = (
+            f"<@&{ROLE_ID}>\n"
+            f"Server will be backed up <t:{int(timestamp)}:R>, please log off.\n"
+            f"There are currently {player_count} players online."
+        )
 
+    send_discord_message(message)
     return DO_BACKUP, timer, timestamp
 
 
@@ -149,7 +165,7 @@ def notify_backup_complete(next_backup: float, success: bool = True) -> None:
     """
     next_backup_time = int(time.time() + next_backup)
     message = (
-        f"Backup completed successfully. **Next backup routine will start in approximately ** <t:{next_backup_time}:R> depending on if there are players online."
+        f"Backup completed successfully. **Next backup:** <t:{next_backup_time}:R>."
         if success
         else f"Backup failed. **Next backup:** <t:{next_backup_time}:R>."
     )
@@ -170,9 +186,9 @@ def login(browser: webdriver.Remote) -> webdriver.Remote:
         Exception: If login fails.
     """
     try:
-        browser.get(BASE_URL)
-
+        logger.info("Preparing to login to G-Portal website")
         # Add the necessary cookies to bypass the consent
+        browser.get(BASE_URL)
         browser.add_cookie(
             {
                 "name": "cookiefirst-consent",
@@ -191,7 +207,7 @@ def login(browser: webdriver.Remote) -> webdriver.Remote:
                 "path": "/",
             }
         )
-        browser.refresh()
+
         wait = WebDriverWait(browser, 10)
 
         # Click on the login button
@@ -220,7 +236,7 @@ def login(browser: webdriver.Remote) -> webdriver.Remote:
 
     except Exception as e:
         logger.error(f"An error occurred during login: {e}")
-        raise
+        raise Exception("Login failed") from e
 
 
 def backup_server(
@@ -260,7 +276,7 @@ def backup_server(
             logger.info("Backup initiated successfully")
 
         logger.info("Backup completed successfully")
-
+        return
     except Exception as e:
         logger.error(f"An error occurred during backup: {e}")
         notify_backup_complete(BACKUP_TIMER, success=False)
@@ -323,10 +339,14 @@ def send_misc_message(message: str) -> None:
 
 
 def main() -> None:
+    if not DO_BACKUP:
+        send_misc_message(
+            "Backup script is running in simulation mode. No backups will be performed."
+        )
     login_times = []
     backup_times = []
     total_prepare_time = 120  # Initial estimate of time required to prepare
-    offset = 0
+
     logger.debug("Starting backup script")
     logger.info("Environment variables:")
     for key in required_env_vars:
@@ -336,7 +356,7 @@ def main() -> None:
         )
 
     options = FirefoxOptions()
-    options.set_capability("pageLoadStrategy", "eager")
+    options.set_capability("pageLoadStrategy", "normal")
 
     while True:
         try:
@@ -365,17 +385,14 @@ def main() -> None:
                 sum(backup_times) / len(backup_times) if backup_times else 0
             )
             if avg_backup_time == 0:
-                avg_backup_time = 30
+                avg_backup_time = 20
             if avg_login_time == 0:
                 avg_login_time = 60
 
-            total_prepare_time = avg_login_time + selenium_start_time + offset
+            total_prepare_time = avg_login_time + avg_backup_time + selenium_start_time
 
             # Ensure we don't sleep negative time
             sleep_time = max(timer - total_prepare_time, 0)
-            sleep_time = (
-                sleep_time * 0.8
-            )  # Reduce sleep time by 20% to account for offsets
             logger.info(
                 f"Sleeping for {sleep_time} seconds before preparing for backup"
             )
@@ -387,7 +404,8 @@ def main() -> None:
                 server_status.get("currentPlayers", 0) if server_status else 0
             )
             notify_discord_half_time(timestamp, player_count)
-
+            # Log how early we are preparing for backup
+            logger.info(f"Preparing for backup {total_prepare_time:.2f} seconds early")
             # Initialize browser and perform login
             browser = webdriver.Remote(
                 command_executor=f"http://{SELENIUM_URL}:{SELENIUM_PORT}/wd/hub",
@@ -416,33 +434,27 @@ def main() -> None:
             backup_times.append(backup_duration)
             logger.info(f"Backup took {backup_duration:.2f} seconds")
 
-            # is it past the timestamp?
-            if time.time() > timestamp:
-                # Adjust the offset to account for the time taken to perform the backup
-                offset = time.time() - timestamp
             # Notify backup completion
             notify_backup_complete(BACKUP_TIMER, success=True)
-            with open("latest_backup.txt", "w+") as f:
-                f.write(f"{time.time()}")
-            # Close browser
-            browser.quit()
 
             # Wait until next backup cycle
             logger.info(f"Waiting for {BACKUP_TIMER} seconds before next backup cycle")
-            time.sleep(BACKUP_TIMER)
 
         except Exception as e:
             logger.error(f"An error occurred during main loop: {e}")
             # notify_backup_complete(BACKUP_TIMER, success=False)
             # Ensure browser is closed
-            if "browser" in locals():
-                try:
-                    browser.quit()
-                except Exception:
-                    pass
             # Wait before retrying
             time.sleep(60)
             continue
+        finally:
+            try:
+                browser.quit()
+
+            except selenium.common.InvalidSessionIdException as e:
+                logger.error(f"Error closing browser: {e}")
+            finally:
+                time.sleep(BACKUP_TIMER)
 
 
 if __name__ == "__main__":
