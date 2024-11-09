@@ -231,6 +231,24 @@ def login(browser: webdriver.Remote):
     return browser
 
 
+def test_selenium_server_available():
+    while browser is None:
+        try:
+            browser = webdriver.Remote(
+                command_executor=f"http://{SELENIUM_URL}:{SELENIUM_PORT}/wd/hub",
+                options=options,
+            )
+            sessionID = browser.session_id
+            time.sleep(1)
+            browser.close()
+            browser.quit()
+        except Exception as e:
+            logger.error(f"Error connecting to Selenium server: {e}")
+            time.sleep(5)
+    logger.info("Selenium server is available")
+    return True
+
+
 def main():
     # test_selenium_server_available()
     logger = logging.getLogger(__name__)
@@ -251,12 +269,14 @@ def main():
         if server_status is None:
             logger.error("Unable to retrieve server status, aborting")
             return
+        test_selenium_server_available()
         browser = None
 
         player_count = server_status.get("currentPlayers", 0)
         logger.info(f"Players online: {player_count}")
         backup, timer, timestamp = notify_discord(player_count=player_count)
         logger.info(f"Waiting for {timer} seconds before initiating backup")
+
         time.sleep(timer - 120)
 
         server_status = get_server_status()
@@ -269,6 +289,7 @@ def main():
                     options=options,
                 )
                 sessionID = browser.session_id
+
             except Exception as e:
                 logger.error(f"Error connecting to Selenium server: {e}")
                 time.sleep(5)
@@ -293,6 +314,7 @@ def main():
         logger.info(f"Waiting for {BACKUP_TIMER} seconds before checking again")
         browser.close()
         browser.quit()
+        logger.info("Waiting for next backup cycle to start: %s", BACKUP_TIMER)
         time.sleep(BACKUP_TIMER)
 
 
